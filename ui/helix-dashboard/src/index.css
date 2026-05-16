@@ -1,0 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0a;
+    color: white;
+}
+
+body {
+    background: #0a0a0a;
+}
+
+.app {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    background: #0a0a0a;
+}
+
+.sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: #111111;
+    border-right: 1px solid #1f1f1f;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.sidebar h1 {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    margin-bottom: 35px;
+}
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.topbar {
+    width: 100%;
+    min-height: 120px;
+    border-bottom: 1px solid #1f1f1f;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    background: #0d0d0d;
+}
+
+.chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: #0a0a0a;
+}
+
+.input-bar {
+    width: 100%;
+    min-height: 90px;
+    border-top: 1px solid #1f1f1f;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: #0d0d0d;
+}
+
+.input-bar input {
+    flex: 1;
+    height: 58px;
+    background: #151515;
+    border: 1px solid #222;
+    outline: none;
+    border-radius: 18px;
+    padding: 0 20px;
+    color: white;
+    font-size: 15px;
+}
+
+.input-bar input:focus {
+    border: 1px solid #444;
+}
+
+.input-bar button {
+    width: 120px;
+    height: 58px;
+    border: none;
+    border-radius: 18px;
+    background: white;
+    color: black;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.input-bar button:hover {
+    opacity: 0.9;
+}
+
+.message {
+    max-width: 75%;
+    padding: 18px;
+    border-radius: 18px;
+    line-height: 1.5;
+    font-size: 14px;
+    white-space: pre-wrap;
+}
+
+.user {
+    align-self: flex-end;
+    background: #1f1f1f;
+}
+
+.assistant {
+    align-self: flex-start;
+    background: #141414;
+    border: 1px solid #1f1f1f;
+}
+
+.card {
+    background: #111111;
+    border: 1px solid #1f1f1f;
+    border-radius: 20px;
+    padding: 18px;
+}
+
+.card h3 {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.card h1 {
+    font-size: 28px;
+}
+
+.status-online {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.status-offline {
+    color: #f87171;
+    font-weight: 600;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+}
+
+.logs-panel {
+    height: 180px;
+    overflow-y: auto;
+    border-top: 1px solid #1f1f1f;
+    padding: 20px;
+    background: #0d0d0d;
+}
+
+.logs-panel p {
+    color: #999;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.telemetry-grid {
+    display: flex;
+    gap: 15px;
+}
+
+.model-grid {
+    display: flex;
+    gap: 15px;
+}
+
+.message h1,
+.message h2,
+.message h3 {
+    margin-bottom: 12px;
+}
+
+.message p {
+    line-height: 1.7;
+    margin-bottom: 12px;
+}
+
+.message ul,
+.message ol {
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
+
+.message li {
+    margin-bottom: 8px;
+}
+
+.message code {
+    background: #1a1a1a;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.message pre {
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 15px;
+}
