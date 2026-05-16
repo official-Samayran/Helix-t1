@@ -1,21 +1,21 @@
-# H E L I X
+# 🚀 H E L I X
 
 > Autonomous Local AI Operating System
 
 ---
 
-# Overview
+# 📖 Overview
 
 H E L I X is a modular AI system designed for intelligent automation, local AI execution, autonomous task handling, and advanced developer workflows.
 
 It combines:
-- Local LLMs
-- Autonomous execution
-- Multi-agent systems
-- Tool orchestration
-- Memory systems
-- API-based architecture
-- Secure execution environments
+- 🧠 Local LLMs
+- ⚡ Autonomous execution
+- 🤖 Multi-agent systems
+- 🛠 Tool orchestration
+- 💾 Memory systems
+- 🌐 API-based architecture
+- 🔒 Secure execution environments
 
 H E L I X is built to:
 - Think
@@ -28,22 +28,22 @@ All locally.
 
 ---
 
-# Features
+# ✨ Features
 
-- Local AI models using Ollama
-- Autonomous orchestration engine
-- Multi-agent architecture
-- API server support
-- Secure sandboxed execution
-- Python automation support
-- Extensible tools system
-- Modular architecture
-- Offline-capable workflows
-- Fast local inference
+- 🧠 Local AI models using Ollama
+- ⚡ Autonomous orchestration engine
+- 🤖 Multi-agent architecture
+- 🌐 API server support
+- 🔒 Secure sandboxed execution
+- 🐍 Python automation support
+- 🛠 Extensible tools system
+- 🧩 Modular architecture
+- 📡 Offline-capable workflows
+- 🚀 Fast local inference
 
 ---
 
-# System Architecture
+# 🏗 System Architecture
 
 ```text
                     ┌────────────────────┐
@@ -76,7 +76,7 @@ All locally.
 
 ---
 
-# Tech Stack
+# 🛠 Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -91,7 +91,7 @@ All locally.
 
 ---
 
-# Folder Structure
+# 📂 Folder Structure
 
 ```text
 HELIX/
@@ -112,7 +112,7 @@ HELIX/
 
 ---
 
-# Hardware Requirements
+# 💻 Hardware Requirements
 
 ## Minimum
 - Intel i5 8th Gen
@@ -127,16 +127,16 @@ HELIX/
 
 ---
 
-# Full Setup Guide (Fresh PC)
+# ⚙ Full Setup Guide (Fresh PC)
 
-## STEP 1 — Install Python
+## 1️⃣ Install Python
 
 Download Python:
 
 https://www.python.org/downloads/
 
 During installation:
-- ENABLE `Add Python to PATH`
+- ✅ ENABLE `Add Python to PATH`
 
 Verify installation:
 
@@ -146,7 +146,7 @@ python --version
 
 ---
 
-## STEP 2 — Install Git
+## 2️⃣ Install Git
 
 Download Git:
 
@@ -160,7 +160,7 @@ git --version
 
 ---
 
-## STEP 3 — Install Ollama
+## 3️⃣ Install Ollama
 
 Download Ollama:
 
@@ -174,7 +174,7 @@ ollama --version
 
 ---
 
-# STEP 4 — Install AI Models
+# 4️⃣ Install AI Models
 
 Install models:
 
@@ -194,7 +194,7 @@ ollama list
 
 ---
 
-# STEP 5 — Clone H E L I X
+# 5️⃣ Clone H E L I X
 
 ```bash
 git clone https://github.com/samayran-ik/Helix.git
@@ -206,7 +206,7 @@ cd Helix
 
 ---
 
-# STEP 6 — Create Virtual Environment
+# 6️⃣ Create Virtual Environment
 
 ```bash
 python -m venv venv
@@ -222,7 +222,7 @@ venv\Scripts\activate
 
 ---
 
-# STEP 7 — Install Dependencies
+# 7️⃣ Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -230,7 +230,7 @@ pip install -r requirements.txt
 
 ---
 
-# STEP 8 — Configure Environment
+# 8️⃣ Configure Environment
 
 Create a `.env` file:
 
@@ -242,7 +242,7 @@ SAFE_WORKSPACE=E:\Helix_Projects
 
 ---
 
-# STEP 9 — Start Ollama
+# 9️⃣ Start Ollama
 
 ```bash
 ollama serve
@@ -252,7 +252,7 @@ Keep terminal open.
 
 ---
 
-# STEP 10 — Run H E L I X
+# 🔟 Run H E L I X
 
 Open another terminal:
 
@@ -268,7 +268,7 @@ uvicorn api.server:app --reload
 
 ---
 
-# First Test
+# 🧪 First Test
 
 ```bash
 curl -X POST http://127.0.0.1:5000/execute ^
@@ -278,7 +278,7 @@ curl -X POST http://127.0.0.1:5000/execute ^
 
 ---
 
-# Recommended Models
+# 🧠 Recommended Models
 
 | Model | Use |
 |---|---|
@@ -289,24 +289,24 @@ curl -X POST http://127.0.0.1:5000/execute ^
 
 ---
 
-# Security Notes
+# 🔒 Security Notes
 
 H E L I X can execute code.
 
 Never:
-- expose server publicly
-- run unknown commands
-- disable path restrictions
-- allow unrestricted shell access
+- ❌ expose server publicly
+- ❌ run unknown commands
+- ❌ disable path restrictions
+- ❌ allow unrestricted shell access
 
 Recommended:
-- isolated workspace
-- non-admin Windows account
-- firewall restrictions
+- ✅ isolated workspace
+- ✅ non-admin Windows account
+- ✅ firewall restrictions
 
 ---
 
-# Troubleshooting
+# 🩹 Troubleshooting
 
 ## Ollama Not Found
 
@@ -321,7 +321,7 @@ Reinstall Ollama if missing.
 ## Python Not Found
 
 Reinstall Python and enable:
-- `Add Python to PATH`
+- ✅ `Add Python to PATH`
 
 ---
 
@@ -351,28 +351,28 @@ python -m pip install --upgrade pip
 
 ---
 
-# Future Roadmap
+# 🛣 Future Roadmap
 
-- Voice interaction
-- GUI dashboard
-- Multi-agent collaboration
-- Long-term memory
-- Browser automation
-- Vision capabilities
-- Mobile integration
-- Autonomous workflows
+- 🎙 Voice interaction
+- 🖥 GUI dashboard
+- 🤖 Multi-agent collaboration
+- 🧠 Long-term memory
+- 🌐 Browser automation
+- 👁 Vision capabilities
+- 📱 Mobile integration
+- ⚡ Autonomous workflows
 
 ---
 
-# Philosophy
+# 🧬 Philosophy
 
 H E L I X is designed to be:
-- modular
-- local-first
-- execution-capable
-- privacy-focused
-- extensible
-- automation-ready
+- 🧩 modular
+- 🔒 local-first
+- ⚡ execution-capable
+- 🛡 privacy-focused
+- 🔧 extensible
+- 🤖 automation-ready
 
 Not just conversational.
 
@@ -380,7 +380,7 @@ Built for real execution.
 
 ---
 
-# Author
+# 👨‍💻 Author
 
 Built by Samayran
 
@@ -389,7 +389,7 @@ https://github.com/samayran-ik
 
 ---
 
-# License
+# 📜 License
 
 MIT License
 
