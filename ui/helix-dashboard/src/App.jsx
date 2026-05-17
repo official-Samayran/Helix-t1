@@ -8,17 +8,17 @@ export default function App() {
 
     return (
 
-        <div className="app">
+        <div className="layout">
 
             <Sidebar />
 
-            <div className="main">
+            <main className="workspace">
 
                 <TelemetryPanel />
 
                 <ChatPanel />
 
-            </div>
+            </main>
 
         </div>
     );
