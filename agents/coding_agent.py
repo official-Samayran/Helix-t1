@@ -1,19 +1,9 @@
+import json
 import os
+import re
 
-from core.execution_router import (
-    ExecutionRouter
-)
-
-from agents.planning_agent import (
-    PlanningAgent
-)
-
-from agents.file_generation_agent import (
-    FileGenerationAgent
-)
-
-from agents.debug_agent import (
-    DebugAgent
+from models.ollama_client import (
+    OllamaClient
 )
 
 from tools.project_tool import (
@@ -24,281 +14,224 @@ from models.project_state import (
     ProjectState
 )
 
-from core.project_context import (
-    ProjectContext
-)
-
-from core.logger import (
-    HelixLogger
-)
-
-from core.event_bus import (
-    EventBus
-)
-
-from core.config import (
-    WORKSPACE_PATH
-)
-
 
 class CodingAgent:
 
-    logger = HelixLogger(
-        "coding"
-    )
-
     @staticmethod
-    def emit(message):
+    def extract_json(text):
 
-        EventBus.emit({
-            "type": "agent_step",
-            "agent": "coding_agent",
-            "message": message
-        })
-
-        CodingAgent.logger.log(
-            message
+        match = re.search(
+            r"```json(.*?)```",
+            text,
+            re.DOTALL
         )
 
+        if match:
+            text = match.group(1)
+
+        return json.loads(text)
+
     @staticmethod
-    def execute(prompt):
+    def execute(user_prompt):
 
-        CodingAgent.emit(
-            "Creating project plan..."
-        )
-
-        plan = (
-            PlanningAgent.create_plan(
-                prompt
+        print(
+            "\n[{}] Creating project plan...\n".format(
+                __import__("datetime").datetime.now()
             )
+        )
+
+        planner_prompt = f"""
+You are an expert software architect.
+
+Generate a JSON response only.
+
+The JSON format must be:
+
+{{
+    "project_name": "",
+    "project_type": "",
+    "run_command": "",
+    "dependencies": [],
+    "files": [
+        {{
+            "path": "",
+            "description": ""
+        }}
+    ]
+}}
+
+USER REQUEST:
+{user_prompt}
+"""
+
+        raw_response = ""
+
+        for chunk in OllamaClient.stream_generate(
+            prompt=planner_prompt
+        ):
+
+            raw_response += chunk
+
+        print("\nRAW RESPONSE:\n")
+        print(raw_response)
+
+        try:
+
+            plan = CodingAgent.extract_json(
+                raw_response
+            )
+
+        except Exception as e:
+
+            return {
+                "success": False,
+                "message": f"Failed parsing project plan: {str(e)}"
+            }
+
+        project_name = plan.get(
+            "project_name",
+            "generated_project"
+        )
+
+        project_type = plan.get(
+            "project_type",
+            ""
+        )
+
+        run_command = plan.get(
+            "run_command",
+            ""
+        )
+
+        dependencies = plan.get(
+            "dependencies",
+            []
+        )
+
+        files = plan.get(
+            "files",
+            []
+        )
+
+        workspace = r"E:\Helix_Projects"
+
+        os.makedirs(
+            workspace,
+            exist_ok=True
         )
 
         state = ProjectState(
-            plan["project_name"],
-            plan["project_type"],
-            plan["run_command"]
+            project_name=project_name,
+            project_type=project_type,
+            run_command=run_command
         )
 
-        project_context = (
-            ProjectContext()
+        state.set_dependencies(
+            dependencies
         )
 
-        project_path = (
-            ProjectTool.create_project(
-                WORKSPACE_PATH,
-                plan["project_name"]
-            )
+        project_path = ProjectTool.create_project(
+            workspace,
+            project_name
         )
 
-        CodingAgent.emit(
-            f"Project created at {project_path}"
+        print(
+            f"\n[{__import__('datetime').datetime.now()}] Project created at {project_path}\n"
         )
 
         ProjectTool.create_folder_structure(
             project_path,
-            plan["files"]
+            files
         )
 
-        generated_files = {}
+        for file in files:
 
-        for file in plan["files"]:
+            file_path = file["path"]
 
-            CodingAgent.emit(
-                f"Generating {file['path']}..."
+            description = file["description"]
+
+            print(
+                f"[{__import__('datetime').datetime.now()}] Generating {file_path}...\n"
             )
 
-            context_prompt = (
-                project_context.build_context_prompt()
-            )
+            generation_prompt = f"""
+Generate complete production-ready code.
 
-            code = (
-                FileGenerationAgent.generate_file(
-                    project_prompt=prompt,
-                    project_plan=plan,
-                    current_file=file,
-                    existing_files=context_prompt
-                )
-            )
+PROJECT TYPE:
+{project_type}
 
-            full_path = os.path.join(
-                project_path,
-                file["path"]
-            )
+FILE:
+{file_path}
 
-            with open(
-                full_path,
-                "w",
-                encoding="utf-8"
-            ) as f:
+DESCRIPTION:
+{description}
 
-                f.write(code)
+USER REQUEST:
+{user_prompt}
 
-            generated_files[
-                file["path"]
-            ] = code
+IMPORTANT:
+- Return code only
+- No markdown
+- No explanations
+"""
 
-            project_context.add_file(
-                file["path"],
-                code
-            )
+            generated_code = ""
 
-            state.generated_files.append(
-                file["path"]
-            )
-
-        CodingAgent.emit(
-            "Installing dependencies..."
-        )
-
-        ProjectTool.install_dependencies(
-            project_path,
-            plan.get(
-                "dependencies",
-                []
-            )
-        )
-
-        ProjectTool.create_requirements_file(
-            project_path,
-            plan.get(
-                "dependencies",
-                []
-            )
-        )
-
-        CodingAgent.emit(
-            "Executing project..."
-        )
-
-        execution = (
-            ExecutionRouter.execute(
-                plan["project_type"],
-                project_path,
-                plan["run_command"]
-            )
-        )
-
-        retry_count = 0
-
-        while (
-            not execution["success"]
-            and retry_count < 3
-        ):
-
-            CodingAgent.emit(
-                "Execution failed. Starting autonomous debugging..."
-            )
-
-            debug_result = (
-                DebugAgent.analyze_error(
-                    prompt,
-                    plan,
-                    generated_files,
-                    execution["stderr"] + execution["stdout"]
-                )
-            )
-
-            broken_file = (
-                debug_result.get(
-                    "broken_file"
-                )
-            )
-
-            if (
-                not broken_file
-                or broken_file
-                not in generated_files
+            for chunk in OllamaClient.stream_generate(
+                prompt=generation_prompt
             ):
 
-                broken_file = list(
-                    generated_files.keys()
-                )[0]
+                generated_code += chunk
 
-            CodingAgent.emit(
-                f"Repairing {broken_file}..."
+            generated_code = generated_code.strip()
+
+            generated_code = re.sub(
+                r"^```[a-zA-Z]*",
+                "",
+                generated_code
             )
 
-            broken_code = generated_files[
-                broken_file
-            ]
-
-            fixed_code = (
-                DebugAgent.fix_file(
-                    project_prompt=prompt,
-                    broken_file_path=broken_file,
-                    broken_file_code=generated_files[
-                        broken_file
-                    ],
-                    error_output=execution[
-                        "stderr"
-                    ] + execution["stdout"],
-                    fix_strategy=debug_result[
-                        "fix_strategy"
-                    ]
-                )
+            generated_code = re.sub(
+                r"```$",
+                "",
+                generated_code
             )
 
-            broken_path = os.path.join(
+            ProjectTool.write_file(
                 project_path,
-                broken_file
+                file_path,
+                generated_code
             )
 
-            with open(
-                broken_path,
-                "w",
-                encoding="utf-8"
-            ) as f:
-
-                f.write(fixed_code)
-
-            generated_files[
-                broken_file
-            ] = fixed_code
-
-            project_context.add_file(
-                broken_file,
-                fixed_code
+            state.add_generated_file(
+                file_path
             )
 
-            state.completed_steps.append(
-                f"Fixed {broken_file}"
+        if dependencies:
+
+            print(
+                f"[{__import__('datetime').datetime.now()}] Installing dependencies...\n"
             )
 
-            CodingAgent.emit(
-                "Retrying execution..."
+            ProjectTool.install_dependencies(
+                project_path,
+                dependencies
             )
 
-            execution = (
-                ExecutionRouter.execute(
-                    plan["project_type"],
-                    project_path,
-                    plan["run_command"]
-                )
+        if dependencies:
+
+            ProjectTool.create_requirements_file(
+                project_path,
+                dependencies
             )
 
-            retry_count += 1
-
-        if execution["success"]:
-
-            CodingAgent.emit(
-                "Project executed successfully."
-            )
-
-        else:
-
-            CodingAgent.emit(
-                "Autonomous debugging failed."
-            )
+        print(
+            f"\n[{__import__('datetime').datetime.now()}] Project generation completed.\n"
+        )
 
         return {
-            "success": execution["success"],
-            "project_name": plan[
-                "project_name"
-            ],
+            "success": True,
+            "message": f"Project created successfully at {project_path}",
             "project_path": project_path,
-            "generated_files": list(
-                generated_files.keys()
-            ),
-            "execution": execution,
             "state": state.to_dict()
         }

@@ -1,7 +1,5 @@
 const { app, BrowserWindow, Tray, Menu } = require('electron')
 const path = require('path')
-const { spawn } = require('child_process')
-const http = require('http')
 
 let mainWindow
 let tray
@@ -13,61 +11,12 @@ if (!gotTheLock) {
   process.exit(0)
 }
 
-function checkOllamaReady() {
-  return new Promise((resolve) => {
-    const req = http.get('http://127.0.0.1:11434', () => {
-      resolve(true)
-    })
-
-    req.on('error', () => {
-      resolve(false)
-    })
-
-    req.end()
-  })
-}
-
-async function waitForOllama() {
-  let ready = false
-
-  while (!ready) {
-    ready = await checkOllamaReady()
-
-    if (!ready) {
-      await new Promise((r) => setTimeout(r, 2000))
-    }
-  }
-}
-
-function startOllama() {
-  spawn('ollama', ['serve'], {
-    detached: true,
-    shell: true,
-    windowsHide: true
-  })
-}
-
-function startBackend() {
-  spawn('python', ['E:/Helix/main.py'], {
-    detached: true,
-    shell: true,
-    windowsHide: true
-  })
-}
-
-async function startServices() {
-  startOllama()
-
-  await waitForOllama()
-
-  startBackend()
-}
-
 function createWindow() {
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
-    show: false,
+    show: true,
     autoHideMenuBar: true,
     backgroundColor: '#0a0a0a',
     webPreferences: {
@@ -77,6 +26,20 @@ function createWindow() {
   })
 
   mainWindow.loadURL('http://localhost:5173')
+
+  mainWindow.webContents.on(
+    'render-process-gone',
+    () => {
+      console.log('Renderer crashed')
+    }
+  )
+
+  mainWindow.webContents.on(
+    'did-fail-load',
+    () => {
+      console.log('Failed loading UI')
+    }
+  )
 
   mainWindow.on('minimize', (event) => {
     event.preventDefault()
@@ -90,7 +53,11 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'icon.png')
+
+  const iconPath = path.join(
+    __dirname,
+    'icon.png'
+  )
 
   tray = new Tray(iconPath)
 
@@ -116,23 +83,28 @@ function createTray() {
   ])
 
   tray.setToolTip('HELIX')
+
   tray.setContextMenu(contextMenu)
 
   tray.on('click', () => {
+
     if (mainWindow.isVisible()) {
       mainWindow.hide()
-    } else {
+    }
+
+    else {
       mainWindow.show()
     }
+
   })
 }
 
-app.whenReady().then(async () => {
-  await startServices()
+app.whenReady().then(() => {
 
   createWindow()
 
   createTray()
+
 })
 
 app.on('window-all-closed', (e) => {

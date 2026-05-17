@@ -1,12 +1,17 @@
 class ProjectState:
 
-    def __init__(self):
+    def __init__(
+        self,
+        project_name=None,
+        project_type=None,
+        run_command=None
+    ):
 
-        self.current_project = None
+        self.current_project = project_name
 
-        self.project_type = None
+        self.project_type = project_type
 
-        self.run_command = None
+        self.run_command = run_command
 
         self.generated_files = []
 
@@ -44,7 +49,7 @@ class ProjectState:
 
         self.dependencies = dependencies
 
-    def get_state(self):
+    def to_dict(self):
 
         return {
             "project_name": self.current_project,
