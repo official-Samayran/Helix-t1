@@ -19,7 +19,9 @@ class OllamaClient:
     ):
 
         response = requests.post(
+
             OllamaClient.BASE_URL,
+
             json={
                 "model": model,
                 "prompt": prompt,
@@ -42,12 +44,15 @@ class OllamaClient:
     ):
 
         response = requests.post(
+
             OllamaClient.BASE_URL,
+
             json={
                 "model": model,
                 "prompt": prompt,
                 "stream": True
             },
+
             stream=True
         )
 
@@ -69,13 +74,15 @@ class OllamaClient:
                     ""
                 )
 
-                full_text += token
+                if token:
 
-                EventBus.emit({
-                    "type": "token",
-                    "stream_type": stream_type,
-                    "token": token
-                })
+                    full_text += token
+
+                    EventBus.emit({
+                        "type": "token",
+                        "stream_type": stream_type,
+                        "content": full_text
+                    })
 
             except:
                 pass

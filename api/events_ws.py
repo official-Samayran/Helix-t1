@@ -1,6 +1,9 @@
 import asyncio
 
-from fastapi import WebSocket
+from fastapi import (
+    WebSocket,
+    WebSocketDisconnect
+)
 
 from core.event_bus import (
     EventBus
@@ -20,14 +23,34 @@ class EventsWS:
 
         def listener(event):
 
-            queue.put_nowait(event)
+            try:
+
+                queue.put_nowait(event)
+
+            except:
+
+                pass
 
         EventBus.subscribe(listener)
 
-        while True:
+        try:
 
-            event = await queue.get()
+            while True:
 
-            await websocket.send_json(
-                event
+                event = await queue.get()
+
+                await websocket.send_json(
+                    event
+                )
+
+        except WebSocketDisconnect:
+
+            print(
+                "WebSocket disconnected"
+            )
+
+        except Exception as e:
+
+            print(
+                f"WS ERROR: {e}"
             )

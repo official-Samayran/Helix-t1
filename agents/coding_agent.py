@@ -1,5 +1,9 @@
 import os
 
+from core.execution_router import (
+    ExecutionRouter
+)
+
 from agents.planning_agent import (
     PlanningAgent
 )
@@ -167,7 +171,8 @@ class CodingAgent:
         )
 
         execution = (
-            ProjectTool.run_project(
+            ExecutionRouter.execute(
+                plan["project_type"],
                 project_path,
                 plan["run_command"]
             )
@@ -194,14 +199,28 @@ class CodingAgent:
             )
 
             broken_file = (
-                debug_result[
+                debug_result.get(
                     "broken_file"
-                ]
+                )
             )
+
+            if (
+                not broken_file
+                or broken_file
+                not in generated_files
+            ):
+
+                broken_file = list(
+                    generated_files.keys()
+                )[0]
 
             CodingAgent.emit(
                 f"Repairing {broken_file}..."
             )
+
+            broken_code = generated_files[
+                broken_file
+            ]
 
             fixed_code = (
                 DebugAgent.fix_file(
@@ -250,7 +269,8 @@ class CodingAgent:
             )
 
             execution = (
-                ProjectTool.run_project(
+                ExecutionRouter.execute(
+                    plan["project_type"],
                     project_path,
                     plan["run_command"]
                 )

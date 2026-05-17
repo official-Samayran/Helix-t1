@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react"
+import {
+    useEffect,
+    useState
+} from "react"
 
 export default function LogsPanel() {
 
-    const [events, setEvents] = useState([])
+    const [logs, setLogs] =
+        useState([])
 
     useEffect(() => {
 
-        const ws = new WebSocket(
-            "ws://127.0.0.1:8000/ws/events"
-        )
+        const event = useEvents()
 
         ws.onmessage = (event) => {
 
@@ -16,10 +18,23 @@ export default function LogsPanel() {
                 event.data
             )
 
-            setEvents(prev => [
-                data,
-                ...prev.slice(0, 100)
-            ])
+            if (
+                data.message
+            ) {
+
+                setLogs(prev => [
+
+                    ...prev,
+
+                    {
+                        type:
+                            data.type,
+
+                        message:
+                            data.message
+                    }
+                ])
+            }
         }
 
         return () => ws.close()
@@ -28,54 +43,45 @@ export default function LogsPanel() {
 
     return (
 
-        <div className="logs-panel">
+        <div className={`terminal-line ${log.type}`}>
 
-            <h3
-                style={{
-                    marginBottom: 15
-                }}
-            >
-                Agent Activity
-            </h3>
+            <div className="terminal-header">
 
-            {events.map(
-                (event, index) => (
+                HELIX TERMINAL
 
-                <div
-                    key={index}
-                    style={{
-                        marginBottom: 12,
-                        padding: 12,
-                        borderRadius: 12,
-                        background: "#111"
-                    }}
-                >
+            </div>
+
+            <div className="terminal-body">
+
+                {logs.map(
+                    (log, index) => (
 
                     <div
-                        style={{
-                            color: "#4ade80",
-                            fontSize: 12,
-                            marginBottom: 5
-                        }}
+                        key={index}
+                        className={`terminal-line ${log.type}`}
                     >
-                        {event.type}
-                    </div>
 
-                    <div
-                        style={{
-                            fontSize: 14,
-                            color: "white"
-                        }}
-                    >
-                        {
-                            event.message
-                            ||
-                            event.token
-                        }
-                    </div>
+                        <span className="terminal-time">
+                            [
+                            {
+                                new Date()
+                                .toLocaleTimeString()
+                            }
+                            ]
+                        </span>
 
-                </div>
-            ))}
+                        <span className="terminal-type">
+                            {log.type}
+                        </span>
+
+                        <span className="terminal-message">
+                            {log.message}
+                        </span>
+
+                    </div>
+                ))}
+
+            </div>
 
         </div>
     )

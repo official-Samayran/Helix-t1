@@ -4,14 +4,13 @@ from fastapi.middleware.cors import (
 )
 
 from fastapi import WebSocket
+
 from pydantic import BaseModel
+
+import traceback
 
 from core.orchestrator import (
     Orchestrator
-)
-
-from api.live_terminal_ws import (
-    LiveTerminalWS
 )
 
 from api.events_ws import (
@@ -30,8 +29,6 @@ app.add_middleware(
 
 orchestrator = Orchestrator()
 
-live_terminal = LiveTerminalWS()
-
 events_ws = EventsWS()
 
 
@@ -43,23 +40,25 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 def chat(req: ChatRequest):
 
-    response = orchestrator.process(
-        req.prompt
-    )
+    try:
 
-    return {
-        "response": response
-    }
+        response = orchestrator.process(
+            req.prompt
+        )
 
+        return {
+            "success": True,
+            "response": response
+        }
 
-@app.websocket("/ws/terminal")
-async def websocket_terminal(
-    websocket: WebSocket
-):
+    except Exception as e:
 
-    await live_terminal.handle(
-        websocket
-    )
+        traceback.print_exc()
+
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 
 @app.websocket("/ws/events")

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react"
+import {
+    useEffect,
+    useRef,
+    useState
+} from "react"
+
+import useEvents from "../hooks/useEvents"
 
 import axios from "axios"
 
@@ -6,22 +12,29 @@ import ReactMarkdown from "react-markdown"
 
 import remarkGfm from "remark-gfm"
 
-
 export default function ChatPanel() {
 
-    const [messages, setMessages] = useState([])
+    const [messages, setMessages] =
+        useState([])
 
-    const [input, setInput] = useState("")
+    const [input, setInput] =
+        useState("")
 
-    const wsRef = useRef(null)
+    const messagesEndRef =
+        useRef(null)
 
     useEffect(() => {
 
-        const ws = new WebSocket(
-            "ws://127.0.0.1:8000/ws/events"
-        )
+        messagesEndRef.current?.
+        scrollIntoView({
+            behavior: "smooth"
+        })
 
-        wsRef.current = ws
+    }, [messages])
+
+    useEffect(() => {
+
+        const event = useEvents()
 
         ws.onmessage = (event) => {
 
@@ -30,12 +43,29 @@ export default function ChatPanel() {
             )
 
             if (
+                data.type === "thinking"
+            ) {
+
+                setMessages(prev => [
+
+                    ...prev,
+
+                    {
+                        role: "assistant",
+                        content: "Thinking..."
+                    }
+                ])
+            }
+
+            if (
                 data.type === "token"
             ) {
 
                 setMessages(prev => {
 
-                    const updated = [...prev]
+                    const updated = [
+                        ...prev
+                    ]
 
                     const last =
                         updated[
@@ -43,52 +73,30 @@ export default function ChatPanel() {
                         ]
 
                     if (
-                        !last
-                        ||
-                        last.role !== "assistant"
+                        last &&
+                        last.role === "assistant"
                     ) {
 
-                        updated.push({
-                            role: "assistant",
-                            content: data.token
-                        })
+                        last.content =
+                            data.content
 
                     } else {
 
-                        last.content += data.token
+                        updated.push({
+
+                            role: "assistant",
+
+                            content:
+                                data.content
+                        })
                     }
 
                     return [...updated]
                 })
             }
-
-            if (
-                data.type === "thinking"
-            ) {
-
-                setMessages(prev => [
-                    ...prev,
-                    {
-                        role: "assistant",
-                        content:
-                            `*${data.message}*`
-                    }
-                ])
-            }
         }
 
-        ws.onerror = (err) => {
-
-            console.error(
-                "WebSocket Error",
-                err
-            )
-        }
-
-        return () => {
-
-            ws.close()
-        }
+        return () => ws.close()
 
     }, [])
 
@@ -99,7 +107,9 @@ export default function ChatPanel() {
         const userInput = input
 
         setMessages(prev => [
+
             ...prev,
+
             {
                 role: "user",
                 content: userInput
@@ -117,23 +127,24 @@ export default function ChatPanel() {
                 }
             )
 
-        } catch (error) {
-
-            console.error(error)
+        } catch {
 
             setMessages(prev => [
+
                 ...prev,
+
                 {
                     role: "assistant",
                     content:
-                        "Backend crashed internally."
+                        "Backend error."
                 }
             ])
         }
     }
 
     return (
-        <>
+
+        <div className="chat-wrapper">
 
             <div className="chat-container">
 
@@ -142,52 +153,75 @@ export default function ChatPanel() {
 
                     <div
                         key={index}
-                        className={`message ${msg.role}`}
+                        className={`message-row ${msg.role}`}
                     >
 
-                        <ReactMarkdown
-                            remarkPlugins={[
-                                remarkGfm
-                            ]}
+                        {
+                            msg.role ===
+                            "assistant" && (
+
+                                <div className="avatar">
+                                    H
+                                </div>
+                            )
+                        }
+
+                        <div
+                            className={`message ${msg.role}`}
                         >
-                            {msg.content}
-                        </ReactMarkdown>
+
+                            <ReactMarkdown
+                                remarkPlugins={[
+                                    remarkGfm
+                                ]}
+                            >
+                                {msg.content}
+                            </ReactMarkdown>
+
+                        </div>
 
                     </div>
                 ))}
 
+                <div ref={messagesEndRef} />
+
             </div>
 
-            <div className="input-bar">
+            <div className="input-container">
 
-                <input
-                    value={input}
-                    onChange={(e) => {
+                <div className="input-bar">
 
-                        setInput(
-                            e.target.value
-                        )
-                    }}
-                    placeholder="Message HELIX..."
-                    onKeyDown={(e) => {
-
-                        if (
-                            e.key === "Enter"
-                        ) {
-
-                            sendMessage()
+                    <input
+                        value={input}
+                        onChange={(e) =>
+                            setInput(
+                                e.target.value
+                            )
                         }
-                    }}
-                />
 
-                <button
-                    onClick={sendMessage}
-                >
-                    Send
-                </button>
+                        placeholder="Message HELIX..."
+
+                        onKeyDown={(e) => {
+
+                            if (
+                                e.key === "Enter"
+                            ) {
+
+                                sendMessage()
+                            }
+                        }}
+                    />
+
+                    <button
+                        onClick={sendMessage}
+                    >
+                        Send
+                    </button>
+
+                </div>
 
             </div>
 
-        </>
+        </div>
     )
 }

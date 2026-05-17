@@ -1,5 +1,3 @@
-from core.router import Router
-
 from agents.coding_agent import (
     CodingAgent
 )
@@ -16,33 +14,29 @@ from agents.desktop_agent import (
     DesktopAgent
 )
 
-from core.brain import Brain
-from core.memory import Memory
-from core.logger import HelixLogger
+from agents.brain_agent import (
+    BrainAgent
+)
 
-WORKSPACE = r"E:\Helix_Projects"
+from core.router import (
+    Router
+)
+
+from core.logger import (
+    HelixLogger
+)
 
 
 class Orchestrator:
 
-    def __init__(self):
+    logger = HelixLogger(
+        "brain"
+    )
 
-        self.memory = Memory()
-
-        self.logger = HelixLogger(
-            "brain"
-        )
-
-        self.coding_agent = (
-            CodingAgent()
-        )
-
-    def process(self, prompt):
-
-        self.memory.save_message(
-            "user",
-            prompt
-        )
+    def process(
+        self,
+        prompt
+    ):
 
         intent = Router.classify(
             prompt
@@ -54,46 +48,30 @@ class Orchestrator:
 
         if intent == "coding":
 
-            response = (
-                self.coding_agent.execute(
-                    prompt,
-                    WORKSPACE
-                )
+            return CodingAgent.execute(
+                prompt
             )
 
         elif intent == "system":
 
-            response = (
-                SystemAgent.execute(
-                    prompt
-                )
+            return SystemAgent.execute(
+                prompt
             )
 
         elif intent == "browser":
 
-            response = (
-                BrowserAgent.execute(
-                    prompt
-                )
+            return BrowserAgent.execute(
+                prompt
             )
 
         elif intent == "desktop":
 
-            response = (
-                DesktopAgent.execute(
-                    prompt
-                )
+            return DesktopAgent.execute(
+                prompt
             )
 
         else:
 
-            response = Brain.think(
+            return BrainAgent.execute(
                 prompt
             )
-
-        self.memory.save_message(
-            "assistant",
-            str(response)
-        )
-
-        return response
