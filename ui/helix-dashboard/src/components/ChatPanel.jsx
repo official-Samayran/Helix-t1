@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import axios from "axios"
 
@@ -6,18 +6,91 @@ import ReactMarkdown from "react-markdown"
 
 import remarkGfm from "remark-gfm"
 
-import { Prism as SyntaxHighlighter }
-from "react-syntax-highlighter"
-
-import { vscDarkPlus }
-from "react-syntax-highlighter/dist/esm/styles/prism"
-
 
 export default function ChatPanel() {
 
     const [messages, setMessages] = useState([])
 
     const [input, setInput] = useState("")
+
+    const wsRef = useRef(null)
+
+    useEffect(() => {
+
+        const ws = new WebSocket(
+            "ws://127.0.0.1:8000/ws/events"
+        )
+
+        wsRef.current = ws
+
+        ws.onmessage = (event) => {
+
+            const data = JSON.parse(
+                event.data
+            )
+
+            if (
+                data.type === "token"
+            ) {
+
+                setMessages(prev => {
+
+                    const updated = [...prev]
+
+                    const last =
+                        updated[
+                            updated.length - 1
+                        ]
+
+                    if (
+                        !last
+                        ||
+                        last.role !== "assistant"
+                    ) {
+
+                        updated.push({
+                            role: "assistant",
+                            content: data.token
+                        })
+
+                    } else {
+
+                        last.content += data.token
+                    }
+
+                    return [...updated]
+                })
+            }
+
+            if (
+                data.type === "thinking"
+            ) {
+
+                setMessages(prev => [
+                    ...prev,
+                    {
+                        role: "assistant",
+                        content:
+                            `*${data.message}*`
+                    }
+                ])
+            }
+        }
+
+        ws.onerror = (err) => {
+
+            console.error(
+                "WebSocket Error",
+                err
+            )
+        }
+
+        return () => {
+
+            ws.close()
+        }
+
+    }, [])
 
     async function sendMessage() {
 
@@ -37,36 +110,12 @@ export default function ChatPanel() {
 
         try {
 
-            const response = await axios.post(
+            await axios.post(
                 "http://127.0.0.1:8000/chat",
                 {
                     prompt: userInput
                 }
             )
-
-            let content =
-                response.data.response
-
-            if (
-                typeof content === "object"
-            ) {
-
-                content = `\`\`\`json
-${JSON.stringify(
-    content,
-    null,
-    2
-)}
-\`\`\``
-            }
-
-            setMessages(prev => [
-                ...prev,
-                {
-                    role: "assistant",
-                    content
-                }
-            ])
 
         } catch (error) {
 
@@ -77,7 +126,7 @@ ${JSON.stringify(
                 {
                     role: "assistant",
                     content:
-                        "## Backend Error\n\nConnection failed."
+                        "Backend crashed internally."
                 }
             ])
         }
@@ -100,42 +149,6 @@ ${JSON.stringify(
                             remarkPlugins={[
                                 remarkGfm
                             ]}
-                            components={{
-
-                                code({
-                                    inline,
-                                    className,
-                                    children,
-                                    ...props
-                                }) {
-
-                                    const match =
-                                        /language-(\\w+)/.exec(
-                                            className || ''
-                                        )
-
-                                    return !inline && match ? (
-
-                                        <SyntaxHighlighter
-                                            style={vscDarkPlus}
-                                            language={match[1]}
-                                            PreTag="div"
-                                            {...props}
-                                        >
-                                            {String(children).replace(/\\n$/, '')}
-                                        </SyntaxHighlighter>
-
-                                    ) : (
-
-                                        <code
-                                            className={className}
-                                            {...props}
-                                        >
-                                            {children}
-                                        </code>
-                                    )
-                                }
-                            }}
                         >
                             {msg.content}
                         </ReactMarkdown>
@@ -150,7 +163,10 @@ ${JSON.stringify(
                 <input
                     value={input}
                     onChange={(e) => {
-                        setInput(e.target.value)
+
+                        setInput(
+                            e.target.value
+                        )
                     }}
                     placeholder="Message HELIX..."
                     onKeyDown={(e) => {

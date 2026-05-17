@@ -1,196 +1,207 @@
 import os
 
-from agents.planning_agent import PlanningAgent
+from agents.planning_agent import (
+    PlanningAgent
+)
+
 from agents.file_generation_agent import (
     FileGenerationAgent
 )
 
-from agents.debug_agent import DebugAgent
+from agents.debug_agent import (
+    DebugAgent
+)
 
-from tools.file_tool import FileTool
-from tools.project_tool import ProjectTool
+from tools.project_tool import (
+    ProjectTool
+)
 
-from core.project_state import ProjectState
-from core.logger import HelixLogger
+from models.project_state import (
+    ProjectState
+)
+
+from core.project_context import (
+    ProjectContext
+)
+
+from core.logger import (
+    HelixLogger
+)
+
+from core.event_bus import (
+    EventBus
+)
+
+from core.config import (
+    WORKSPACE_PATH
+)
 
 
 class CodingAgent:
 
-    def __init__(self):
+    logger = HelixLogger(
+        "coding"
+    )
 
-        self.logger = HelixLogger("coding")
+    @staticmethod
+    def emit(message):
 
-        self.state = ProjectState()
+        EventBus.emit({
+            "type": "agent_step",
+            "agent": "coding_agent",
+            "message": message
+        })
 
-    def execute(
-        self,
-        prompt,
-        workspace
-    ):
-
-        self.logger.log(
-            "Creating project plan"
+        CodingAgent.logger.log(
+            message
         )
 
-        project_plan = (
-            PlanningAgent.create_plan(prompt)
+    @staticmethod
+    def execute(prompt):
+
+        CodingAgent.emit(
+            "Creating project plan..."
         )
 
-        project_name = (
-            project_plan["project_name"]
+        plan = (
+            PlanningAgent.create_plan(
+                prompt
+            )
+        )
+
+        state = ProjectState(
+            plan["project_name"],
+            plan["project_type"],
+            plan["run_command"]
+        )
+
+        project_context = (
+            ProjectContext()
         )
 
         project_path = (
             ProjectTool.create_project(
-                workspace,
-                project_name
+                WORKSPACE_PATH,
+                plan["project_name"]
             )
         )
 
-        self.state.set_project(project_name)
-
-        self.state.set_project_type(
-            project_plan["project_type"]
-        )
-
-        self.state.set_run_command(
-            project_plan["run_command"]
-        )
-
-        self.state.set_dependencies(
-            project_plan["dependencies"]
+        CodingAgent.emit(
+            f"Project created at {project_path}"
         )
 
         ProjectTool.create_folder_structure(
             project_path,
-            project_plan["files"]
+            plan["files"]
         )
 
         generated_files = {}
 
-        for file_data in project_plan["files"]:
+        for file in plan["files"]:
 
-            file_path = file_data["path"]
+            CodingAgent.emit(
+                f"Generating {file['path']}..."
+            )
 
-            self.logger.log(
-                f"Generating {file_path}"
+            context_prompt = (
+                project_context.build_context_prompt()
             )
 
             code = (
                 FileGenerationAgent.generate_file(
                     project_prompt=prompt,
-                    project_plan=project_plan,
-                    current_file=file_data,
-                    existing_files=list(
-                        generated_files.keys()
-                    )
+                    project_plan=plan,
+                    current_file=file,
+                    existing_files=context_prompt
                 )
             )
 
-            absolute_path = os.path.join(
+            full_path = os.path.join(
                 project_path,
-                file_path
+                file["path"]
             )
 
-            FileTool.write(
-                absolute_path,
+            with open(
+                full_path,
+                "w",
+                encoding="utf-8"
+            ) as f:
+
+                f.write(code)
+
+            generated_files[
+                file["path"]
+            ] = code
+
+            project_context.add_file(
+                file["path"],
                 code
             )
 
-            generated_files[file_path] = code
-
-            self.state.add_generated_file(
-                file_path
+            state.generated_files.append(
+                file["path"]
             )
 
-        self.logger.log(
-            "Installing dependencies"
+        CodingAgent.emit(
+            "Installing dependencies..."
         )
 
-        dependency_result = (
-            ProjectTool.install_dependencies(
-                project_path,
-                project_plan["dependencies"]
+        ProjectTool.install_dependencies(
+            project_path,
+            plan.get(
+                "dependencies",
+                []
             )
-        )
-
-        self.logger.log(
-            str(dependency_result)
         )
 
         ProjectTool.create_requirements_file(
             project_path,
-            project_plan["dependencies"]
+            plan.get(
+                "dependencies",
+                []
+            )
         )
 
-        max_debug_attempts = 5
+        CodingAgent.emit(
+            "Executing project..."
+        )
 
-        for attempt in range(
-            max_debug_attempts
+        execution = (
+            ProjectTool.run_project(
+                project_path,
+                plan["run_command"]
+            )
+        )
+
+        retry_count = 0
+
+        while (
+            not execution["success"]
+            and retry_count < 3
         ):
 
-            self.logger.log(
-                f"Run Attempt {attempt + 1}"
+            CodingAgent.emit(
+                "Execution failed. Starting autonomous debugging..."
             )
-
-            run_result = (
-                ProjectTool.run_project(
-                    project_path,
-                    project_plan["run_command"]
-                )
-            )
-
-            if run_result["success"]:
-
-                self.logger.log(
-                    "Project executed successfully"
-                )
-
-                return {
-                    "success": True,
-                    "project_name": project_name,
-                    "project_path": project_path,
-                    "generated_files": list(
-                        generated_files.keys()
-                    ),
-                    "execution": run_result,
-                    "state": self.state.get_state()
-                }
-
-            error_output = (
-                run_result["stderr"]
-            )
-
-            self.logger.log(error_output)
 
             debug_result = (
                 DebugAgent.analyze_error(
-                    project_prompt=prompt,
-                    project_plan=project_plan,
-                    generated_files=generated_files,
-                    error_output=error_output
+                    prompt,
+                    plan,
+                    generated_files,
+                    execution["stderr"] + execution["stdout"]
                 )
             )
 
             broken_file = (
-                debug_result["broken_file"]
+                debug_result[
+                    "broken_file"
+                ]
             )
 
-            fix_strategy = (
-                debug_result["fix_strategy"]
+            CodingAgent.emit(
+                f"Repairing {broken_file}..."
             )
-
-            self.logger.log(
-                f"Broken File: {broken_file}"
-            )
-
-            if broken_file not in generated_files:
-
-                self.logger.log(
-                    "Broken file not found"
-                )
-
-                break
 
             fixed_code = (
                 DebugAgent.fix_file(
@@ -199,31 +210,75 @@ class CodingAgent:
                     broken_file_code=generated_files[
                         broken_file
                     ],
-                    error_output=error_output,
-                    fix_strategy=fix_strategy
+                    error_output=execution[
+                        "stderr"
+                    ] + execution["stdout"],
+                    fix_strategy=debug_result[
+                        "fix_strategy"
+                    ]
                 )
             )
 
-            absolute_path = os.path.join(
+            broken_path = os.path.join(
                 project_path,
                 broken_file
             )
 
-            FileTool.write(
-                absolute_path,
-                fixed_code
-            )
+            with open(
+                broken_path,
+                "w",
+                encoding="utf-8"
+            ) as f:
+
+                f.write(fixed_code)
 
             generated_files[
                 broken_file
             ] = fixed_code
 
-            self.state.add_completed_step(
+            project_context.add_file(
+                broken_file,
+                fixed_code
+            )
+
+            state.completed_steps.append(
                 f"Fixed {broken_file}"
             )
 
+            CodingAgent.emit(
+                "Retrying execution..."
+            )
+
+            execution = (
+                ProjectTool.run_project(
+                    project_path,
+                    plan["run_command"]
+                )
+            )
+
+            retry_count += 1
+
+        if execution["success"]:
+
+            CodingAgent.emit(
+                "Project executed successfully."
+            )
+
+        else:
+
+            CodingAgent.emit(
+                "Autonomous debugging failed."
+            )
+
         return {
-            "success": False,
-            "error": "Autonomous debugging failed",
-            "state": self.state.get_state()
+            "success": execution["success"],
+            "project_name": plan[
+                "project_name"
+            ],
+            "project_path": project_path,
+            "generated_files": list(
+                generated_files.keys()
+            ),
+            "execution": execution,
+            "state": state.to_dict()
         }

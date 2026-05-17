@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 export default function LogsPanel() {
 
-    const [logs, setLogs] = useState([])
+    const [events, setEvents] = useState([])
 
     useEffect(() => {
 
@@ -16,7 +16,7 @@ export default function LogsPanel() {
                 event.data
             )
 
-            setLogs(prev => [
+            setEvents(prev => [
                 data,
                 ...prev.slice(0, 100)
             ])
@@ -38,8 +38,8 @@ export default function LogsPanel() {
                 Agent Activity
             </h3>
 
-            {logs.map(
-                (log, index) => (
+            {events.map(
+                (event, index) => (
 
                 <div
                     key={index}
@@ -58,15 +58,20 @@ export default function LogsPanel() {
                             marginBottom: 5
                         }}
                     >
-                        {log.category}
+                        {event.type}
                     </div>
 
                     <div
                         style={{
-                            fontSize: 14
+                            fontSize: 14,
+                            color: "white"
                         }}
                     >
-                        {log.message}
+                        {
+                            event.message
+                            ||
+                            event.token
+                        }
                     </div>
 
                 </div>
