@@ -1,36 +1,53 @@
 export default function Sidebar() {
 
     return (
-        <div className="sidebar">
 
-            <h1
+        <div
+            style={{
+                width: "260px",
+                height: "100vh",
+                background: "#0b0b0b",
+                borderRight: "1px solid #1f1f1f",
+                padding: "24px",
+                color: "white"
+            }}
+        >
+
+            <div
                 style={{
-                    marginBottom: 30,
-                    fontSize: 28
+                    fontSize: "38px",
+                    fontWeight: "700",
+                    letterSpacing: "12px",
+                    marginBottom: "40px"
                 }}
             >
-                H E L I X
-            </h1>
+                HELIX
+            </div>
 
-            <div className="card">
-                <h3>System</h3>
-                <p className="status-online">
+            <div
+                style={{
+                    border: "1px solid #1f1f1f",
+                    borderRadius: "18px",
+                    padding: "20px",
+                    marginBottom: "20px",
+                    background: "#111"
+                }}
+            >
+                <div style={{ color: "#777" }}>
+                    System
+                </div>
+
+                <div
+                    style={{
+                        color: "#00ff88",
+                        marginTop: "8px",
+                        fontWeight: "600"
+                    }}
+                >
                     ONLINE
-                </p>
-            </div>
-
-            <div className="card">
-                <h3>Workspace</h3>
-                <p>E:\\Helix_Projects</p>
-            </div>
-
-            <div className="card">
-                <h3>Connection</h3>
-                <p className="status-online">
-                    Phone Connected
-                </p>
+                </div>
             </div>
 
         </div>
-    )
+    );
 }

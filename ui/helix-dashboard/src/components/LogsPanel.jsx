@@ -3,52 +3,49 @@ import {
     useState
 } from "react"
 
+import useEvents from "../hooks/useEvents"
+
 export default function LogsPanel() {
 
     const [logs, setLogs] =
         useState([])
 
+    const event = useEvents()
+
     useEffect(() => {
 
-        const event = useEvents()
+        if (!event) return
 
-        ws.onmessage = (event) => {
+        if (
+            event.message
+        ) {
 
-            const data = JSON.parse(
-                event.data
-            )
+            setLogs(prev => [
 
-            if (
-                data.message
-            ) {
+                ...prev,
 
-                setLogs(prev => [
+                {
+                    type:
+                        event.type || "info",
 
-                    ...prev,
+                    message:
+                        event.message,
 
-                    {
-                        type:
-                            data.type,
-
-                        message:
-                            data.message
-                    }
-                ])
-            }
+                    time:
+                        new Date()
+                        .toLocaleTimeString()
+                }
+            ])
         }
 
-        return () => ws.close()
-
-    }, [])
+    }, [event])
 
     return (
 
-        <div className={`terminal-line ${log.type}`}>
+        <div className="terminal-panel">
 
             <div className="terminal-header">
-
                 HELIX TERMINAL
-
             </div>
 
             <div className="terminal-body">
@@ -62,12 +59,7 @@ export default function LogsPanel() {
                     >
 
                         <span className="terminal-time">
-                            [
-                            {
-                                new Date()
-                                .toLocaleTimeString()
-                            }
-                            ]
+                            [{log.time}]
                         </span>
 
                         <span className="terminal-type">

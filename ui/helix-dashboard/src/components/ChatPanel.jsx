@@ -1,133 +1,72 @@
-import {
-    useEffect,
-    useRef,
-    useState
-} from "react"
+import { useEffect, useRef, useState } from "react";
 
-import useEvents from "../hooks/useEvents"
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-import axios from "axios"
+import { Prism as SyntaxHighlighter }
+from "react-syntax-highlighter";
 
-import ReactMarkdown from "react-markdown"
-
-import remarkGfm from "remark-gfm"
+import { vscDarkPlus }
+from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export default function ChatPanel() {
 
-    const [messages, setMessages] =
-        useState([])
+    const [messages, setMessages] = useState([]);
 
-    const [input, setInput] =
-        useState("")
+    const [input, setInput] = useState("");
 
-    const messagesEndRef =
-        useRef(null)
+    const [loading, setLoading] = useState(false);
+
+    const bottomRef = useRef(null);
 
     useEffect(() => {
 
-        messagesEndRef.current?.
-        scrollIntoView({
+        bottomRef.current?.scrollIntoView({
             behavior: "smooth"
-        })
+        });
 
-    }, [messages])
-
-    useEffect(() => {
-
-        const event = useEvents()
-
-        ws.onmessage = (event) => {
-
-            const data = JSON.parse(
-                event.data
-            )
-
-            if (
-                data.type === "thinking"
-            ) {
-
-                setMessages(prev => [
-
-                    ...prev,
-
-                    {
-                        role: "assistant",
-                        content: "Thinking..."
-                    }
-                ])
-            }
-
-            if (
-                data.type === "token"
-            ) {
-
-                setMessages(prev => {
-
-                    const updated = [
-                        ...prev
-                    ]
-
-                    const last =
-                        updated[
-                            updated.length - 1
-                        ]
-
-                    if (
-                        last &&
-                        last.role === "assistant"
-                    ) {
-
-                        last.content =
-                            data.content
-
-                    } else {
-
-                        updated.push({
-
-                            role: "assistant",
-
-                            content:
-                                data.content
-                        })
-                    }
-
-                    return [...updated]
-                })
-            }
-        }
-
-        return () => ws.close()
-
-    }, [])
+    }, [messages]);
 
     async function sendMessage() {
 
-        if (!input.trim()) return
+        if (!input.trim() || loading) {
+            return;
+        }
 
-        const userInput = input
+        const userMessage = {
+            role: "user",
+            content: input
+        };
 
         setMessages(prev => [
-
             ...prev,
+            userMessage
+        ]);
 
-            {
-                role: "user",
-                content: userInput
-            }
-        ])
+        const currentPrompt = input;
 
-        setInput("")
+        setInput("");
+
+        setLoading(true);
 
         try {
 
-            await axios.post(
+            const response = await fetch(
                 "http://127.0.0.1:8000/chat",
                 {
-                    prompt: userInput
-                }
-            )
+                    method: "POST",
 
-        } catch {
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        prompt: currentPrompt
+                    })
+                }
+            );
+
+            const data = await response.json();
 
             setMessages(prev => [
 
@@ -136,92 +75,271 @@ export default function ChatPanel() {
                 {
                     role: "assistant",
                     content:
-                        "Backend error."
+                        typeof data.response === "string"
+                            ? data.response
+                            : JSON.stringify(
+                                data,
+                                null,
+                                2
+                            )
                 }
-            ])
+            ]);
+
         }
+
+        catch (error) {
+
+            setMessages(prev => [
+
+                ...prev,
+
+                {
+                    role: "assistant",
+                    content:
+`# Backend Error
+
+\`\`\`
+${error.message}
+\`\`\`
+`
+                }
+            ]);
+        }
+
+        setLoading(false);
     }
 
     return (
 
-        <div className="chat-wrapper">
+        <div
+            style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                background: "#000"
+            }}
+        >
 
-            <div className="chat-container">
+            <div
+                style={{
+                    flex: 1,
+                    overflowY: "auto",
+                    padding: "40px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "40px"
+                }}
+            >
 
-                {messages.map(
-                    (msg, index) => (
+                {
+
+                    messages.length === 0 && (
+
+                        <div
+                            style={{
+                                color: "#777",
+                                fontSize: "18px"
+                            }}
+                        >
+                            HELIX ready.
+                        </div>
+                    )
+                }
+
+                {messages.map((message, index) => (
 
                     <div
                         key={index}
-                        className={`message-row ${msg.role}`}
+                        style={{
+                            display: "flex",
+                            justifyContent:
+                                message.role === "user"
+                                    ? "flex-end"
+                                    : "flex-start"
+                        }}
                     >
 
                         {
-                            msg.role ===
-                            "assistant" && (
 
-                                <div className="avatar">
-                                    H
-                                </div>
-                            )
+                            message.role === "user"
+
+                            ?
+
+                            <div
+                                style={{
+                                    maxWidth: "520px",
+                                    background: "#1b1b1b",
+                                    border: "1px solid #2a2a2a",
+                                    borderRadius: "22px",
+                                    padding: "18px 22px",
+                                    color: "white",
+                                    lineHeight: "1.7"
+                                }}
+                            >
+                                {message.content}
+                            </div>
+
+                            :
+
+                            <div
+                                style={{
+                                    width: "100%",
+                                    maxWidth: "900px",
+                                    color: "white",
+                                    lineHeight: "1.8",
+                                    fontSize: "16px"
+                                }}
+                            >
+
+                                <ReactMarkdown
+
+                                    remarkPlugins={[remarkGfm]}
+
+                                    components={{
+
+                                        code({
+
+                                            inline,
+                                            className,
+                                            children,
+                                            ...props
+
+                                        }) {
+
+                                            const match =
+                                                /language-(\w+)/.exec(
+                                                    className || ""
+                                                );
+
+                                            return !inline && match ? (
+
+                                                <SyntaxHighlighter
+
+                                                    style={vscDarkPlus}
+
+                                                    language={match[1]}
+
+                                                    PreTag="div"
+
+                                                    customStyle={{
+                                                        borderRadius: "18px",
+                                                        padding: "18px",
+                                                        background: "#0d1117",
+                                                        border:
+                                                        "1px solid #222"
+                                                    }}
+
+                                                    {...props}
+                                                >
+                                                    {
+                                                        String(children)
+                                                        .replace(/\n$/, "")
+                                                    }
+                                                </SyntaxHighlighter>
+
+                                            ) : (
+
+                                                <code
+                                                    style={{
+                                                        background: "#111",
+                                                        padding: "4px 8px",
+                                                        borderRadius: "8px"
+                                                    }}
+                                                    {...props}
+                                                >
+                                                    {children}
+                                                </code>
+                                            );
+                                        }
+                                    }}
+
+                                >
+                                    {message.content}
+                                </ReactMarkdown>
+
+                            </div>
                         }
 
-                        <div
-                            className={`message ${msg.role}`}
-                        >
-
-                            <ReactMarkdown
-                                remarkPlugins={[
-                                    remarkGfm
-                                ]}
-                            >
-                                {msg.content}
-                            </ReactMarkdown>
-
-                        </div>
-
                     </div>
+
                 ))}
 
-                <div ref={messagesEndRef} />
+                {
+
+                    loading && (
+
+                        <div
+                            style={{
+                                color: "#00ff88"
+                            }}
+                        >
+                            HELIX thinking...
+                        </div>
+                    )
+                }
+
+                <div ref={bottomRef} />
 
             </div>
 
-            <div className="input-container">
+            <div
+                style={{
+                    borderTop: "1px solid #1f1f1f",
+                    padding: "24px",
+                    display: "flex",
+                    gap: "18px",
+                    background: "#050505"
+                }}
+            >
 
-                <div className="input-bar">
+                <input
+                    value={input}
 
-                    <input
-                        value={input}
-                        onChange={(e) =>
-                            setInput(
-                                e.target.value
-                            )
+                    onChange={(e) =>
+                        setInput(e.target.value)
+                    }
+
+                    onKeyDown={(e) => {
+
+                        if (e.key === "Enter") {
+                            sendMessage();
                         }
+                    }}
 
-                        placeholder="Message HELIX..."
+                    placeholder="Message HELIX..."
 
-                        onKeyDown={(e) => {
+                    style={{
+                        flex: 1,
+                        height: "62px",
+                        borderRadius: "18px",
+                        border: "1px solid #1f1f1f",
+                        background: "#0d0d0d",
+                        color: "white",
+                        padding: "0 22px",
+                        outline: "none",
+                        fontSize: "16px"
+                    }}
+                />
 
-                            if (
-                                e.key === "Enter"
-                            ) {
+                <button
+                    onClick={sendMessage}
 
-                                sendMessage()
-                            }
-                        }}
-                    />
-
-                    <button
-                        onClick={sendMessage}
-                    >
-                        Send
-                    </button>
-
-                </div>
+                    style={{
+                        width: "120px",
+                        borderRadius: "18px",
+                        border: "none",
+                        background: "white",
+                        color: "black",
+                        fontWeight: "700",
+                        fontSize: "16px",
+                        cursor: "pointer"
+                    }}
+                >
+                    Send
+                </button>
 
             </div>
 
         </div>
-    )
+    );
 }

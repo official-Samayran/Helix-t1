@@ -1,25 +1,31 @@
 export default function ModelStatus() {
 
     return (
-        <div
-            style={{
-                display: "flex",
-                gap: 15
-            }}
-        >
 
-            <div className="card">
-                <h3>Llama 3.1</h3>
-                <p className="status-online">
+        <div className="models">
+
+            <div className="model-card">
+
+                <div className="model-name">
+                    Llama 3.1
+                </div>
+
+                <div className="model-status">
                     ACTIVE
-                </p>
+                </div>
+
             </div>
 
-            <div className="card">
-                <h3>DeepSeek</h3>
-                <p className="status-online">
+            <div className="model-card">
+
+                <div className="model-name">
+                    DeepSeek
+                </div>
+
+                <div className="model-status">
                     READY
-                </p>
+                </div>
+
             </div>
 
         </div>
