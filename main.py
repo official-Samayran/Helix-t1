@@ -3,7 +3,6 @@ import threading
 import uvicorn
 import pystray
 import threading
-from api.server import start_api_server
 from agents.system_agent import SystemTrayController
 from PIL import Image
 from PIL import ImageDraw
