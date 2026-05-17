@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run vite\" \"npm run electron\"",
     "vite": "vite",
-    "electron": "wait-on http://localhost:5173 && electron electron/main.js",
+    "electron": "wait-on http://localhost:5173 && electron electron/main.cjs",
     "build": "vite build"
   },
   "dependencies": {
