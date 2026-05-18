@@ -67,6 +67,7 @@ USER REQUEST:
         raw_response = ""
 
         for chunk in OllamaClient.stream_generate(
+            model="helix-master",
             prompt=planner_prompt
         ):
 
@@ -178,6 +179,7 @@ IMPORTANT:
             generated_code = ""
 
             for chunk in OllamaClient.stream_generate(
+                model="helix-master",
                 prompt=generation_prompt
             ):
 
@@ -217,8 +219,6 @@ IMPORTANT:
                 project_path,
                 dependencies
             )
-
-        if dependencies:
 
             ProjectTool.create_requirements_file(
                 project_path,
