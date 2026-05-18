@@ -1,7 +1,7 @@
 @echo off
-title HELIX MASTER STARTER
+title HELIX DEV STARTER
 
-echo Starting HELIX...
+echo Starting HELIX Development Environment...
 
 :: =========================
 :: KILL OLD PROCESSES
@@ -10,24 +10,25 @@ echo Starting HELIX...
 taskkill /F /IM electron.exe >nul 2>&1
 taskkill /F /IM node.exe >nul 2>&1
 taskkill /F /IM python.exe >nul 2>&1
+taskkill /F /IM ollama.exe >nul 2>&1
 
 :: =========================
 :: START OLLAMA
 :: =========================
 
-start "" /MIN cmd /c ollama serve
+start "OLLAMA" cmd /k ollama serve
 
 timeout /t 5 >nul
 
 :: =========================
-:: START FASTAPI BACKEND
+:: START BACKEND
 :: =========================
 
 cd /d "E:\Helix"
 
-start "" /MIN cmd /c uvicorn api.server:app --host 127.0.0.1 --port 8000
+start "UVICORN" cmd /k uvicorn api.server:app --reload --host 127.0.0.1 --port 8000
 
-timeout /t 5 >nul
+timeout /t 3 >nul
 
 :: =========================
 :: START FRONTEND
@@ -35,6 +36,6 @@ timeout /t 5 >nul
 
 cd /d "E:\Helix\ui\helix-dashboard"
 
-start "" /MIN cmd /c npm run dev
+start "HELIX UI" cmd /k npm run dev
 
 exit

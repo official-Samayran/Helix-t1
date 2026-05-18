@@ -1,14 +1,15 @@
 @echo off
-title HELIX MASTER KILLER
+title HELIX KILLER
 
-echo Killing HELIX...
+echo Stopping HELIX...
 
 taskkill /F /IM electron.exe >nul 2>&1
 taskkill /F /IM node.exe >nul 2>&1
 taskkill /F /IM python.exe >nul 2>&1
 taskkill /F /IM ollama.exe >nul 2>&1
 
-echo HELIX stopped.
+echo.
+echo HELIX stopped successfully.
 
 timeout /t 2 >nul
 
